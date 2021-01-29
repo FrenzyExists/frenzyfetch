@@ -652,6 +652,13 @@ block_range=(0 15)
 # Flag:     --color_blocks
 color_blocks="on"
 
+# If color blocks are toggled choose style
+#
+# Default: 'blocks'
+# Values: 'blocks', 'panels'
+block_style="panels"
+
+
 # Color block width in spaces
 #
 # Default:  '3'
@@ -3858,34 +3865,79 @@ get_gpu_driver() {
     esac
 }
 
+testy() {
+    machh=$(printf "%-${1}s")
+    machh=${machh// /${2}}
+}
+
 get_cols() {
-    local blocks blocks2 cols
+    local blocks blocks2 blocks3 cols surfs temp_width
+
+    printf -v surfs "%1s"
 
     if [[ "$color_blocks" == "on" ]]; then
         # Convert the width to space chars.
+        temp_width=$block_width
         printf -v block_width "%${block_width}s"
-
+        
         # Generate the string.
-        for ((block_range[0]; block_range[0]<=block_range[1]; block_range[0]++)); do
-            case ${block_range[0]} in
-                [0-7])
-                    printf -v blocks  '%b\e[3%bm\e[4%bm%b' \
-                        "$blocks" "${block_range[0]}" "${block_range[0]}" "$block_width"
-                ;;
+        if [[ "$block_style" == "panels" ]]; then
+        
+            for ((block_range[0]; block_range[0]<=block_range[1]; block_range[0]++)); do
+                case ${block_range[0]} in
+                    [0-7])
+                        # Top
+                        testy $((temp_width+2)) █
+                        printf -v blocks  '%b\e[38;5;%bm\e[48;%bm%b' \
+                            "$blocks" "${block_range[0]}" "${block_range[0]}"  "$machh"▄ "$block_width"                     
+                        
+                        # Med
+                        testy $((temp_width+3)) █
+                        printf -v blocks2 '%b\e[38;5;%bm\e[48;%bm%b' \
+                            "$blocks2" "${block_range[0]}" "${block_range[0]}" "$machh" "$block_width"
+                        
+                        # Bottom
+                        testy $((temp_width+2)) ▀
+                        printf -v blocks3 '%b\e[38;5;%bm\e[48;%bm%b' \
+                            "$blocks3" "${block_range[0]}" "${block_range[0]}" " $machh" "$block_width"
+                    ;;
+                esac     
+            done
 
-                *)
-                    printf -v blocks2 '%b\e[38;5;%bm\e[48;5;%bm%b' \
-                        "$blocks2" "${block_range[0]}" "${block_range[0]}" "$block_width"
-                ;;
-            esac
-        done
+            # Convert height into spaces.
+            printf -v block_spaces "%${block_height}s"
+            
+            # block_spaces=" "
+    
+            # Convert the spaces into rows of blocks.
+            [[ "$blocks"  ]] && cols+="${surfs// /${blocks}[mnl}"
+            [[ "$blocks2" ]] && cols+="${block_spaces// /${blocks2}[mnl}"
+            [[ "$blocks3" ]] && cols+="${surfs// /${blocks3}[mnl}"
 
-        # Convert height into spaces.
-        printf -v block_spaces "%${block_height}s"
+        elif [[ "$block_style" == "blocks" ]]; then
 
-        # Convert the spaces into rows of blocks.
-        [[ "$blocks"  ]] && cols+="${block_spaces// /${blocks}[mnl}"
-        [[ "$blocks2" ]] && cols+="${block_spaces// /${blocks2}[mnl}"
+            for ((block_range[0]; block_range[0]<=block_range[1]; block_range[0]++)); do
+                case ${block_range[0]} in
+                    [0-7])
+                        printf -v blocks  '%b\e[3%bm\e[4%bm%b' \
+                            "$blocks" "${block_range[0]}" "${block_range[0]}" "$block_width"
+                    ;;
+
+                    *)
+                        printf -v blocks2 '%b\e[38;5;%bm\e[48;5;%bm%b' \
+                            "$blocks2" "${block_range[0]}" "${block_range[0]}" "$block_width"
+                    ;;
+                esac
+            done
+
+            # Convert height into spaces.
+            printf -v block_spaces "%${block_height}s"
+
+            # Convert the spaces into rows of blocks.
+            [[ "$blocks"  ]] && cols+="${block_spaces// /${blocks}[mnl}"
+            [[ "$blocks2" ]] && cols+="${block_spaces// /${blocks2}[mnl}"
+        
+        fi
 
         # Add newlines to the string.
         cols=${cols%%nl}
@@ -3901,7 +3953,7 @@ get_cols() {
         esac
     fi
 
-    unset -v blocks blocks2 cols
+    unset -v blocks blocks2 blocks3 temp_width cols
 
     # Tell info() that we printed manually.
     prin=1
@@ -5238,6 +5290,7 @@ get_args() {
             "--block_width") block_width="$2" ;;
             "--block_height") block_height="$2" ;;
             "--col_offset") col_offset="$2" ;;
+            "--block_style") block_style="$2";;
 
             # Bars
             "--bar_char")
@@ -5938,23 +5991,23 @@ EOF
         "ArchStrike"*)
             set_colors 8 6
             read -rd '' ascii_data <<'EOF'
-${c1}                   *   
-                  **.
-                 ****
-                ******
-                *******
-              ** *******
-             **** *******
-            ${c1}****${c2}_____${c1}***${c2}/${c1}*
-           ***${c2}/${c1}*******${c2}//${c1}***
-          **${c2}/${c1}********${c2}///${c1}*${c2}/${c1}**
-         **${c2}/${c1}*******${c2}////${c1}***${c2}/${c1}**
-        **${c2}/${c1}****${c2}//////.,${c1}****${c2}/${c1}**
-       ***${c2}/${c1}*****${c2}/////////${c1}**${c2}/${c1}***
-      ****${c2}/${c1}****    ${c2}/////${c1}***${c2}/${c1}****
-     ******${c2}/${c1}***  ${c2}////   ${c1}**${c2}/${c1}******
-    ********${c2}/${c1}* ${c2}///      ${c1}*${c2}/${c1}********
-  ,******     ${c2}// ______ /    ${c1}******,
+${c1}                   *   
+                  **.
+                 ****
+                ******
+                *******
+              ** *******
+             **** *******
+            ${c1}****${c2}_____${c1}***${c2}/${c1}*
+           ***${c2}/${c1}*******${c2}//${c1}***
+          **${c2}/${c1}********${c2}///${c1}*${c2}/${c1}**
+         **${c2}/${c1}*******${c2}////${c1}***${c2}/${c1}**
+        **${c2}/${c1}****${c2}//////.,${c1}****${c2}/${c1}**
+       ***${c2}/${c1}*****${c2}/////////${c1}**${c2}/${c1}***
+      ****${c2}/${c1}****    ${c2}/////${c1}***${c2}/${c1}****
+     ******${c2}/${c1}***  ${c2}////   ${c1}**${c2}/${c1}******
+    ********${c2}/${c1}* ${c2}///      ${c1}*${c2}/${c1}********
+  ,******     ${c2}// ______ /    ${c1}******,
 EOF
         ;;
 
