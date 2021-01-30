@@ -656,7 +656,7 @@ color_blocks="on"
 #
 # Default: 'blocks'
 # Values: 'blocks', 'panels'
-block_style="panels"
+block_style="blocks"
 
 
 # Color block width in spaces
@@ -930,6 +930,16 @@ background_color=
 
 
 # Misc Options
+
+# Unixporn Mode
+# A simple premade config by a user in Unixporn. he passed me his config and 
+# ported at this fork for anyone who doesn't like the default config, but doesn't 
+# either wanna mess with configs too much.
+#
+# For this mode you must have installed Nerd Fonts or Font Awesome 4 or newer
+#
+# Flag:   --unixporn_mode
+
 
 # Stdout mode
 # Turn off all colors and disables image backend (ASCII/Image).
@@ -4685,6 +4695,54 @@ color() {
 }
 
 # OTHER
+# UNIXPORN MODE
+unixporn() {
+    local awesome_font="Awesome"
+    local nerd_font="Nerd Font"2
+
+    if [[ "$nerd_font" =~ .*"$term_font".* ]] ||  [[ "$awesome_font" =~ .*"$term_font".* ]]; then
+        print_info() {
+        info "$(perl -CS -E 'say "\x{f19c}"') " title
+        info underline
+        info " " "$nerd_font" distro 
+        info " " kernel | cut -f 1 -d '-'
+        info " " uptime
+        info " " packages
+        info ""shell
+        info " " term
+        info " " resolution
+        info " " wm
+        info " " theme    
+        info "ﯔ " font
+        info cols
+    }
+
+    else 
+        print_info() {
+        info  title
+        info underline
+        info "D " distro
+        info "K " kernel | cut -f 1 -d '-'
+        info "U " uptime
+        info "P " packages
+        info "S"shell
+        info "T " term
+        info "R " resolution
+        info "W " wm
+        info "H " theme    
+        info "F " font
+        info cols
+        }   
+    fi
+    separator=" ● "  #" ⟫"
+    colors=(5 4 8 6 8 7)
+    block_range=(1 7)
+    block_style="panels"
+    block_width=2
+    block_height=2
+    ascii_distro="linux"
+    unset -v awesome_font nerd_font
+}
 
 stdout() {
     image_backend="off"
@@ -5451,6 +5509,8 @@ get_args() {
                 mpc_args=()
                 printf '%s\n' "$kernel $icons $font $battery $locale ${mpc_args[*]}"
             ;;
+            # UNIXPORN
+            "--unixporn_mode") unixporn ;;
         esac
 
         shift
